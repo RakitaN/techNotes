@@ -1,13 +1,16 @@
+require("dotenv").config();
 const express = require("express");
 const app = express();
 const path = require("path");
-const { logger } = require("./middleware/logger");
+const { logger, logEvents } = require("./middleware/logger");
 const errorHandler = require("./middleware/errorHandler");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const corsOptions = require("./config/corsOptions");
-const PORT = process.env.PORT || 4000;
+const mongoose = require("mongoose");
+const PORT = process.env.PORT;
 
+//Middleware
 app.use(logger);
 
 app.use(cors(corsOptions));
@@ -20,6 +23,7 @@ app.use("/", express.static(path.join(__dirname, "public")));
 
 app.use("/", require("./routes/root"));
 
+//Splash and error pages
 app.all("*", (req, res) => {
     res.status(404);
     if (req.accepts("html")) {
@@ -31,8 +35,18 @@ app.all("*", (req, res) => {
     }
 });
 
+//Error logger
 app.use(errorHandler);
 
-app.listen(PORT, () => {
-    console.log(`Server started on port ${PORT}`)
-});
+//connect to database
+mongoose.connect(process.env.MONGO_URI)
+    .then(() => {
+        //listen for requests
+        app.listen(process.env.PORT, () => {
+        console.log("Connected to db, listening on port", process.env.PORT);
+        });
+    })
+    .catch((err) => {
+        console.log(err);
+        logEvents(`${err.no}: ${err.code}\t${err.syscall}\t${err.hostname}`, "mongoErrLog.log");
+    });
