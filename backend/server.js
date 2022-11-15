@@ -21,7 +21,10 @@ app.use(cookieParser());
 
 app.use("/", express.static(path.join(__dirname, "public")));
 
+//Routes
 app.use("/", require("./routes/root"));
+app.use("/users", require("./routes/userRoutes"));
+app.use("/notes", require("./routes/noteRoutes"));
 
 //Splash and error pages
 app.all("*", (req, res) => {
